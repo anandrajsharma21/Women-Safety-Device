@@ -1,0 +1,50 @@
+# 🔌 Hardware Schematic & Circuit Design
+
+
+
+This document provides complete electrical connection specifications, hardware pin mapping, and power distribution rules for the **TinyML Two-Part Women Safety Device**.
+
+---
+
+## 🗂️ Hardware Pin Mapping Matrix
+
+| Peripheral / Sensor | Module Pin | ESP32 GPIO | Logic Level | Power Rail | Protocol / Circuit Role |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **INMP441 Digital Mic** | VDD | — | — | 3.3V (~1.4mA) | Core Power |
+| | GND | — | — | GND (0V) | Common Ground |
+| | SD | **GPIO 32** | 3.3V | — | I2S Data Line |
+| | WS | **GPIO 25** | 3.3V | — | I2S Word Select (LRCLK) |
+| | SCK | **GPIO 33** | 3.3V | — | I2S Continuous Bit Clock |
+| | L/R | — | — | GND (0V) | Channel Config (Left Channel) |
+| **NEO-6M GPS Module** | VCC | — | — | 3.3V / 5V | Core Power (~45mA) |
+| | GND | — | — | GND (0V) | Common Ground |
+| | TX | **GPIO 16** | 3.3V | — | UART RX2 (Hardware Serial) |
+| | RX | **GPIO 17** | 3.3V | — | UART TX2 (Hardware Serial) |
+| **SIM800L Cellular** | VCC | — | — | **3.7V–4.2V** | **Direct LiPo Power (2A Peak)** |
+| | GND | — | — | GND (0V) | **Must Share Common Ground** |
+| | TX | **GPIO 26** | 3.3V | — | UART RX1 (Hardware Serial) |
+| | RX | **GPIO 27** | 3.3V | — | UART TX1 (Hardware Serial) |
+| **MAX30102 Wrist PPG** | VCC | — | — | 3.3V (~600µA) | Core Power |
+| | GND | — | — | GND (0V) | Common Ground |
+| | SDA | **GPIO 21** | 3.3V | — | I2C Data Line (Pull-Up) |
+| | SCL | **GPIO 22** | 3.3V | — | I2C Clock Line (Pull-Up) |
+| **Anti-Tamper Circuit**| Interlock | **GPIO 5** | 3.3V | Pull-Up 3.3V| Hardware Interrupt (Detachment) |
+| **Manual SOS Switch** | Signal | **GPIO 4** | 3.3V | Pull-Up 3.3V| Physical Override Switch |
+
+---
+
+## ⚡ Power Topology & Distribution Scheme
+
+```mermaid
+graph TD
+    B[3.7V 2000mAh LiPo Battery] -->|Direct Raw Current| G[SIM800L GSM Module\nPeak Current: 2.0A]
+    B -->|Filtered Battery Output| Reg[TP4056 Charger + 3.3V Low Dropout Regulator]
+    
+    Reg -->|Regulated 3.3V Bus| MCU[ESP32 Microcontroller]
+    Reg -->|Regulated 3.3V Bus| MIC[INMP441 I2S Microphone]
+    Reg -->|Regulated 3.3V Bus| PPG[MAX30102 PPG Wrist Sensor]
+    Reg -->|Regulated 3.3V Bus| GPS[NEO-6M GPS Satellite Unit]
+
+    classDef primary fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef danger fill:#ff9999,stroke:#900,stroke-width:2px;
+    class G danger;
